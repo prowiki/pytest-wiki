@@ -1,23 +1,25 @@
 # ToC: unittest.mock
 
-- [Preface](#preface)
-- [unittest.mock.Mock](#unittestmockmock)
-- [unittest.mock.patch](#unittestmockpatch)
-  * [patch object](#patch-object)
-  * [patch function directly](#patch-function-directly)
-  * [patch a long chain of function call](#patch-a-long-chain-of-function-call)
-  * [side_effect](#side-effect)
-  * [patch dict](#patch-dict)
+- [ToC: unittest.mock](#toc-unittestmock)
+  - [Preface](#preface)
+  - [unittest.mock.Mock](#unittestmockmock)
+  - [unittest.mock.patch](#unittestmockpatch)
+    - [patch object](#patch-object)
+    - [patch function directly](#patch-function-directly)
+    - [patch a long chain of function call](#patch-a-long-chain-of-function-call)
+    - [side_effect](#side_effect)
+    - [patch dict](#patch-dict)
 
 ## Preface
 
-1. Don't use `MagicMock` unless you know what you are doing: https://stackoverflow.com/questions/17181687/mock-vs-magicmock. But sometimes you might use `MagicMock` unintentionally.
-2. Ref: https://mozillazg.com/2018/03/python-introduction-mock-unit-test-examples-cookbook.html. There are some usages, such as mock properties and builtin functions that we don't cover in this wiki.
+1. Don't use `MagicMock` unless you know what you are doing: https://stackoverflow.com/questions/17181687/mock-vs-magicmock. But in most time, there's no difference as long as you don't test "magic" methods.
+2. Sometimes you might use `MagicMock` unintentionally, e.x. when you are using `patch.object()`.
+3. Ref: https://mozillazg.com/2018/03/python-introduction-mock-unit-test-examples-cookbook.html. There are some usages, such as mock properties and builtin functions that we don't cover in this wiki.
 
 ## unittest.mock.Mock
 
 ```python
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 m = Mock()
 m.func.return_value = 'hello'
