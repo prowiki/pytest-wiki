@@ -1,21 +1,22 @@
 # ToC: pytest
 
-- [pytest basics](#pytest-basics)
-  * [Reference](#reference)
-  * [Installation](#installation)
-  * [Usage](#usage)
-  * [Catching Exceptions](#catching-exceptions)
-  * [Mark](#mark)
-    + [Custom Marks](#custom-marks)
-    + [Built-in Marks: skip](#built-in-marks--skip)
-    + [Built-in Marks: xfail](#built-in-marks--xfail)
-    + [Parametrize](#parametrize)
-  * [Fixture](#fixture)
-    + [Before test cases](#before-test-cases)
-    + [After test cases](#after-test-cases)
-    + [Auto use fixtures](#auto-use-fixtures)
-    + [Parametrize fixture](#parametrize-fixture)
-    + [Built-in fixtures](#built-in-fixtures)
+- [ToC: pytest](#toc-pytest)
+  - [pytest basics](#pytest-basics)
+    - [Reference](#reference)
+    - [Installation](#installation)
+    - [Usage](#usage)
+    - [Catching Exceptions](#catching-exceptions)
+    - [Mark](#mark)
+      - [Custom Marks](#custom-marks)
+      - [Built-in Marks: skip](#built-in-marks-skip)
+      - [Built-in Marks: xfail](#built-in-marks-xfail)
+      - [Parametrize](#parametrize)
+    - [Fixture](#fixture)
+      - [Before test cases](#before-test-cases)
+      - [After test cases](#after-test-cases)
+      - [Auto use fixtures](#auto-use-fixtures)
+      - [Parametrize fixture](#parametrize-fixture)
+      - [Built-in fixtures](#built-in-fixtures)
 
 ## pytest basics
 
@@ -23,7 +24,8 @@
 
 ### Reference
 
-https://learning-pytest.readthedocs.io/zh/latest/index.html
+1. https://learning-pytest.readthedocs.io/zh/latest/index.html
+2. https://docs.pytest.org/en/latest/monkeypatch.html
 
 ### Installation
 
@@ -124,7 +126,7 @@ def test_passwd_md5(user, passwd):
     assert hashlib.md5(passwd.encode()).hexdigest() == db[user]
 ```
 
-It will run this test case three times with three `passwd`s, respectively.
+It will run this test case twice with two `passwd`s, respectively.
 
 ### Fixture
 
@@ -172,13 +174,13 @@ Note: use `-s` to show printed contents.
 
 #### Auto use fixtures
 
+Typically you just want for setup/teardown only and don't want the return values.
+
 ```python
 # test_autouse.py
 
 import time
 import pytest
-
-DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 @pytest.fixture(autouse=True)
 def timer_function_scope():
@@ -223,7 +225,7 @@ Note: use `-s` to show printed contents.
 
 #### Built-in fixtures
 
-1. `tmpdir`
+1. `tmpdir`: temporary path
 
 ```python
 def test_tmpdir(tmpdir):
@@ -235,9 +237,27 @@ def test_tmpdir(tmpdir):
     assert a_file.read() == 'hello, pytest!'
 ```
 
+```python
+import json
+
+def test_tmpdir(tmpdir):
+    a_dir = tmpdir.mkdir('mytmpdir')
+    a_file = a_dir.join('tmpfile.txt')
+
+    d = {"a": 1, "b": 2}
+
+    with open(a_file, "w") as fp:
+        json.dump(d, fp)
+
+    with open(a_file, "r") as fp:
+        ed = json.load(fp)
+
+    assert d == ed
+```
+
 Another option is `tmpdir_factory`.
 
-2. `copsys`
+2. `copsys`: read from system out/err
 
 ```python
 # test_capsys.py
@@ -274,4 +294,41 @@ setenv(name, value, prepend=None)
 delenv(name, raising=True)
 ```
 
-Another option is `unittest.mock`. Here's a compare: https://github.com/pytest-dev/pytest/issues/4576
+To use `monkeypath` context is recommended.
+
+```python
+import pytest
+import time
+import os
+
+def test_patch(monkeypatch):
+    now = time.time()
+    def mock_return():
+        return now
+    monkeypatch.setattr(time, "time", mock_return)
+    assert time.time() == now
+
+def test_context(monkeypatch):
+    with monkeypatch.context() as m:
+        m.setattr(time, "time", "haoxu")
+        assert time.time == "haoxu"
+    assert time.time != "haoxu"
+
+def test_env(monkeypatch):
+    with monkeypatch.context() as m:
+        m.setenv("NAME", "hxu")
+        assert os.getenv("NAME") == "hxu"
+
+def test_dict(monkeypatch):
+    d = {"a": 10, "b": 20}
+    with monkeypatch.context() as m:
+        m.setitem(d, "a", 1)
+        m.delitem(d, "b")
+        assert len(d) == 1
+        assert d["a"] == 1
+    assert len(d) == 2
+```
+
+Another option is `unittest.mock`. Here's a comparison/discussion: https://github.com/pytest-dev/pytest/issues/4576.
+
+Also, I have a wiki for `unittest.mock`: https://github.com/prowiki/pytest-wiki/blob/master/unittest-mock.md
