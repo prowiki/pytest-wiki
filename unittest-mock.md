@@ -3,6 +3,7 @@
 - [ToC: unittest.mock](#toc-unittestmock)
   - [Preface](#preface)
   - [unittest.mock.Mock](#unittestmockmock)
+    - [Mock assert methods](#mock-assert-methods)
   - [unittest.mock.patch](#unittestmockpatch)
     - [patch object](#patch-object)
     - [patch function directly](#patch-function-directly)
@@ -25,6 +26,30 @@ m = Mock()
 m.func.return_value = 'hello'
 print(m.func())
 print(m.func(2))
+```
+
+### Mock assert methods
+
+```python
+from unittest.mock import ANY, Mock, patch, call
+
+m = Mock()
+m.func.return_value = "hello"
+m.func1.return_value = "world"
+m.func2.return_value = None
+print(m.func())
+print(m.func1(1))
+assert m.func.call_args == call() # last
+print(m.func(2))
+assert m.func.call_args == call(2) # last
+assert m.func.call_count == 2 # overall
+m.func.assert_called() # overall
+m.func.assert_called_with(2) # last
+m.func1.assert_called_once_with(1) # overall
+m.func.assert_has_calls([call(), call(2)]) # overall
+m.func.assert_has_calls([call(), call(ANY)]) # overall
+assert m.func.call_count == 2 # overall
+m.func2.assert_not_called() # overall
 ```
 
 ## unittest.mock.patch
@@ -60,9 +85,9 @@ with patch('time.time', Mock(return_value='now~')):
 with patch.object(time, 'time') as mock_time:
     print(type(mock_time))
     # be attention to the first 'return_value'
-    mock_time.return_value.my_func(...).get_value.return_value = 'now~now~'
+    mock_time.return_value.my_func.return_value.get_value.return_value = 'now~now~'
     # mock_time.return_value = new_mock = Mock()
-    # new_mock.my_func(...).get_value.return_value = 'now~now~'
+    # new_mock.my_func.return_value.get_value.return_value = 'now~now~'
     print(time.time().my_func(1).get_value())
 ```
 
@@ -79,7 +104,7 @@ def mock_time_fixture():
 
 def test_mock(mock_time_fixture):
     print(">>>>>", type(mock_time_fixture))
-    mock_time_fixture.my_func(...).get_value.return_value = 'now~now~'
+    mock_time_fixture.my_func.return_value.get_value.return_value = 'now~now~'
     print(time.time().my_func(1).get_value())
 ```
 
@@ -89,19 +114,28 @@ If you want the function return different across different calls, then `side_eff
 
 ```python
 with patch.object(time, 'time', side_effect=['now~', 'a second later~']):
-    print(time.time())
-    print(time.time())
+    assert time.time() == 'now~'
+    assert time.time() == 'a second later~'
 
 with patch.object(time, 'time', side_effect=range(10)):
-    print(time.time())
-    print(time.time())
+    assert time.time() == 1
+    assert time.time() == 2
+
+# preferable way
+with patch.object(time, 'time') as mock_time:
+    mock_time.side_effect=range(10)
+    assert time.time() == 1
+    assert time.time() == 2
 ```
 
-Also, it can mock a exception.
+Also, it can mock an **exception**.
 
 ```python
-with patch.object(time, 'time', side_effect=ValueError('side effect error')):
-    print(time.time())
+with pytest.raises(ValueError) as e:
+    with patch.object(time, 'time', side_effect=ValueError('side effect error')):
+        time.time()
+        exec_msg = e.value.args[0]
+        assert exec_msg == 'side effect error'
 ```
 
 ### patch dict
