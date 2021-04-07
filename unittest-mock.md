@@ -48,9 +48,14 @@ m.func.assert_called() # overall
 m.func.assert_called_with(2) # last
 m.func1.assert_called_once_with(1) # overall
 m.func.assert_has_calls([call(), call(2)]) # overall
+assert m.func.call_args_list == [call(), call(2)] # overall
 m.func.assert_has_calls([call(), call(ANY)]) # overall
 assert m.func.call_count == 2 # overall
 m.func2.assert_not_called() # overall
+
+for call in m.func.call_args_list:
+    args, kwargs = call # parse call as tuple
+    print(args)
 ```
 
 ## unittest.mock.patch
