@@ -10,6 +10,7 @@
     - [patch a long chain of function call](#patch-a-long-chain-of-function-call)
     - [side_effect](#side_effect)
     - [patch dict](#patch-dict)
+    - [patch context manager](#patch-context-manager)
 
 ## Preface
 
@@ -148,4 +149,29 @@ with patch.dict(my_dict, {'key': 'new_val'}):
 with patch.dict(my_dict, key='new_val', ext='ext_val'):
     print(my_dict['key'])
     print(my_dict['ext'])
+```
+
+### patch context manager
+
+```python
+from contextlib import contextmanager
+ 
+@contextmanager
+def managed_resource():
+   resource = 1  # acquire resource
+   try:
+       yield resource
+   finally:
+       pass  # release resource
+ 
+ 
+from unittest.mock import Mock, patch
+ 
+with patch("__main__.managed_resource") as mock_managed_resource:
+   mock_resource = Mock()
+   mock_resource.value = 10
+   mock_managed_resource.return_value.__enter__.return_value = mock_resource
+ 
+   with managed_resource() as resource:
+       print(resource.value)
 ```
